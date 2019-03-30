@@ -1,3 +1,6 @@
+
+Here: I have added 3d version A* 
+
 # A\*
 This is a very simple C++ implementation of the A\* algorithm for pathfinding
 on a two-dimensional grid.  The compiled ```astar.so``` file is callable from Python.  See ```pyastar.py``` for the Python wrapper and
