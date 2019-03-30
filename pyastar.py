@@ -13,7 +13,7 @@ ndmat_f_type = np.ctypeslib.ndpointer(
 ndmat_i_type = np.ctypeslib.ndpointer(
     dtype=np.int32, ndim=1, flags='C_CONTIGUOUS')
 astar.restype = ctypes.c_bool
-astar.argtypes = [ndmat_f_type, ctypes.c_int, ctypes.c_int,
+astar.argtypes = [ndmat_f_type, ctypes.c_int, ctypes.c_int, ctypes.c_int,
                   ctypes.c_int, ctypes.c_int, ctypes.c_bool,
                   ndmat_i_type]
 
@@ -32,29 +32,32 @@ def astar_path(weights, start, goal, allow_diagonal=False):
             goal[1] < 0 or goal[1] >= weights.shape[1]):
         raise ValueError('Goal of (%d, %d) lies outside grid.' % (goal))
 
-    height, width = weights.shape
-    start_idx = np.ravel_multi_index(start, (height, width))
-    goal_idx = np.ravel_multi_index(goal, (height, width))
+    height, width, depth = weights.shape
+    start_idx = np.ravel_multi_index(start, (height, width, depth))
+    goal_idx = np.ravel_multi_index(goal, (height, width, depth))
 
     # The C++ code writes the solution to the paths array
-    paths = np.full(height * width, -1, dtype=np.int32)
+    paths = np.full(height * width *depth, -1, dtype=np.int32)
     success = astar(
-        weights.flatten(), height, width, start_idx, goal_idx, allow_diagonal,
+        weights.flatten(), height, width, depth, start_idx, goal_idx, allow_diagonal,
         paths  # output parameter
     )
+
+    print(success)
+
     if not success:
         return np.array([])
 
     coordinates = []
     path_idx = goal_idx
     while path_idx != start_idx:
-        pi, pj = np.unravel_index(path_idx, (height, width))
-        coordinates.append((pi, pj))
+        pi, pj, pz = np.unravel_index(path_idx, (height, width, depth))
+        coordinates.append((pi, pj, pz))
 
         path_idx = paths[path_idx]
 
     if coordinates:
-        coordinates.append(np.unravel_index(start_idx, (height, width)))
+        coordinates.append(np.unravel_index(start_idx, (height, width, depth)))
         return np.vstack(coordinates[::-1])
     else:
         return np.array([])
